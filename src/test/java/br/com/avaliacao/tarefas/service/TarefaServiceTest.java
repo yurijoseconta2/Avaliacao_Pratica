@@ -139,6 +139,12 @@ class TarefaServiceTest {
     }
 
     @Test
+    void naoDeveAceitarTituloMenorQueCincoCaracteresAposRemoverEspacos() {
+        assertThrows(RegraDeNegocioException.class,
+                () -> tarefaService.criar(new TarefaRequest("    a", null, null, null)));
+    }
+
+    @Test
     void naoDeveExcluirTarefaConcluida() {
         when(tarefaRepository.findById(1L))
                 .thenReturn(Optional.of(tarefa(1L, "Revisar código", StatusTarefa.CONCLUIDA)));

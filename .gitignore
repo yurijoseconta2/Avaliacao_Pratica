@@ -29,3 +29,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+**
+!**/
+!.gitignore
+!README.md
+!pom.xml
+!src/**

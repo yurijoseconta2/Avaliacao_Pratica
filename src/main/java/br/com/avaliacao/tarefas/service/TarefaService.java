@@ -23,14 +23,15 @@ public class TarefaService {
     }
 
     public TarefaResponse criar(TarefaRequest request) {
+        String titulo = normalizarTitulo(request.titulo());
         StatusTarefa status = request.status() == null
                 ? StatusTarefa.PENDENTE
                 : request.status();
         validarDataConclusao(status, request.dataConclusao());
-        validarTituloAtivo(request.titulo(), status);
+        validarTituloAtivo(titulo, status);
 
         Tarefa tarefa = new Tarefa();
-        tarefa.setTitulo(request.titulo().trim());
+        tarefa.setTitulo(titulo);
         tarefa.setDescricao(request.descricao());
         tarefa.setStatus(status);
         tarefa.setDataConclusao(request.dataConclusao());
@@ -49,6 +50,7 @@ public class TarefaService {
 
     public TarefaResponse atualizar(Long id, TarefaRequest request) {
         Tarefa tarefa = buscarEntidade(id);
+        String titulo = normalizarTitulo(request.titulo());
         if (request.status() == null) {
             throw new RegraDeNegocioException("O status é obrigatório na atualização");
         }
@@ -59,9 +61,9 @@ public class TarefaService {
         }
 
         validarDataConclusao(request.status(), request.dataConclusao());
-        validarTituloAtivo(id, request.titulo(), request.status());
+        validarTituloAtivo(id, titulo, request.status());
 
-        tarefa.setTitulo(request.titulo().trim());
+        tarefa.setTitulo(titulo);
         tarefa.setDescricao(request.descricao());
         tarefa.setStatus(request.status());
         tarefa.setDataConclusao(request.status() == StatusTarefa.CONCLUIDA
@@ -84,10 +86,22 @@ public class TarefaService {
                         "Tarefa não encontrada com o id " + id));
     }
 
+    private String normalizarTitulo(String titulo) {
+        if (titulo == null) {
+            throw new RegraDeNegocioException("O título é obrigatório");
+        }
+        String normalizado = titulo.strip();
+        if (normalizado.length() < 5 || normalizado.length() > 100) {
+            throw new RegraDeNegocioException(
+                    "O título deve ter entre 5 e 100 caracteres, desconsiderando espaços externos");
+        }
+        return normalizado;
+    }
+
     private void validarTituloAtivo(String titulo, StatusTarefa status) {
         if (status != StatusTarefa.CONCLUIDA
                 && tarefaRepository.existsByTituloIgnoreCaseAndStatusNot(
-                        titulo.trim(), StatusTarefa.CONCLUIDA)) {
+                        titulo, StatusTarefa.CONCLUIDA)) {
             throw new RegraDeNegocioException("Já existe uma tarefa ativa com esse título");
         }
     }
@@ -95,7 +109,7 @@ public class TarefaService {
     private void validarTituloAtivo(Long id, String titulo, StatusTarefa status) {
         if (status != StatusTarefa.CONCLUIDA
                 && tarefaRepository.existsByTituloIgnoreCaseAndStatusNotAndIdNot(
-                        titulo.trim(), StatusTarefa.CONCLUIDA, id)) {
+                titulo, StatusTarefa.CONCLUIDA, id)) {
             throw new RegraDeNegocioException("Já existe uma tarefa ativa com esse título");
         }
     }
